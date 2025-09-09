@@ -20,7 +20,7 @@ class AddMovie(SQLModel):
     director: str = Field(min_length=1, max_length=100, description="Director must be between 1 and 100 characters")
     category: str = Field(min_length=1, max_length=100, description="Category must be between 1 and 100 characters")
     rating: int = Field(ge=1, le=5, description="Rating must be between 1 and 5")
-    year_released: int = Field(ge=1900, lt=2005, description="Year released must be between 1900 and 2005")
+    year_released: int = Field(ge=1900, le=2005, description="Year released must be between 1900 and 2005")
     image_url: str = Field(min_length=1, max_length=200, description="Image URL must be between 1 and 200 characters")
     rental_price: float = Field(ge=0, description="Rental price must be greater than or equal to 0")
     available_amount: int = Field(ge=0, description="Available amount must be greater than or equal to 0")
@@ -31,7 +31,7 @@ class UpdateMovie(SQLModel):
     director: Optional[str] = Field(min_length=1, max_length=100, description="Director must be between 1 and 100 characters")
     category: Optional[str] = Field(min_length=1, max_length=100, description="Category must be between 1 and 100 characters")
     rating: Optional[int] = Field(ge=1, le=5, description="Rating must be between 1 and 5")
-    year_released: Optional[int] = Field(ge=1900, lt=2005, description="Year released must be between 1900 and 2005")
+    year_released: Optional[int] = Field(ge=1900, le=2005, description="Year released must be between 1900 and 2005")
     image_url: Optional[str] = Field(min_length=1, max_length=200, description="Image URL must be between 1 and 200 characters")
     rental_price: Optional[float] = Field(ge=0, description="Rental price must be greater than or equal to 0")
     available_amount: Optional[int] = Field(ge=0, description="Available amount must be greater than or equal to 0")
@@ -48,10 +48,18 @@ async def get_all_movies(
         default=None,
         description="Repeat the query param for multiple IDs: ?movie_ids=1&movie_ids=2"
     ),
+    year_released: Optional[int] = Query(
+        default=None,
+        description="Year released must be between 1900 and 2005"
+    )
 ) -> Page[Movie]:
     if search:
         movies = db.exec(select(Movie).where(func.lower(Movie.title).contains(search.lower()))).all()
 
+        return paginate(movies)
+
+    if year_released:
+        movies = db.exec(select(Movie).where(Movie.year_released == year_released)).all()
         return paginate(movies)
 
     if movie_ids:
